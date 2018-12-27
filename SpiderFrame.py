@@ -32,30 +32,31 @@ class Spider:
         self.ip=Spider.get_ip_list(self.head)#代理ip
     def show_information(self):
         print("我是 %s 爬虫\n编号%s"%(self.name,self.id))
-    def requests(self,mathod,url,data=None,params=None,encode='utf-8'):
-        for i in url:
-            if i not in self.usedurl:
+    def requests(self,mathod,component,encode='utf-8'):
+        for i in component:#组件，dict of list [{'url':'http://www.baidu.com'...}{'data':}]
+            if i['url'] not in self.usedurl:
                 if mathod=='get':
-                    html=requests.get(i,headers=self.head,params=params,proxies=random.choice(self.ip),verify=True)
+                    html=requests.get(i['url'],headers=self.head,params=i['params'],\
+                                      proxies=random.choice(self.ip),verify=True)
                     html.encoding=encode
                     if html.status_code==200:
                         self.response.append(html)
                 else:
-                    html=requests.post(i,headers=self.head,data=data)
+                    html=requests.post(i['url'],headers=self.head,data=i['data'])
                     html.encoding=encode
                     if html.status_code==200:
                         self.response.append(html)
                 self.usedurl.append(i)
-    def multithreads_requests(self,mathod,urls,k,data=None,params=None,encode='utf-8'):#多线程发送请求
+    def multithreads_requests(self,mathod,package,k,encode='utf-8'):#多线程发送请求
         threads = []#存放线程的数组，相当于线程池
         p=0
         k=k#间隔
-        while p+k<=len(urls):
-            thread =threading.Thread(target=self.requests,args=(mathod,urls[p:p+k],data,params,encode))#指定线程i的执行函数为myThread
+        while p+k<=len(package):
+            thread =threading.Thread(target=self.requests,args=(mathod,package[p:p+k],encode))#指定线程i的执行函数为myThread
             p+=k
             threads.append(thread)#先讲这个线程放到线程threads
         if p!=len(urls):
-            thread =threading.Thread(target=self.requests,args=(mathod,urls[p:len(urls)],data,params,encode))
+            thread =threading.Thread(target=self.requests,args=(mathod,package[p:len(package)],encode))
             threads.append(thread)
         for t in threads:#让线程池中的所有数组开始
             t.start()
