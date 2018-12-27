@@ -61,8 +61,20 @@ class Spider:
             t.start()
         for t in threads:#让线程池中的所有数组开始 
             t.join()
-    def search(self,mode='/html',mathod='xpath'):#匹配信息
-        if mathod=='xpath':
+    def search(self,mode='/html',mathod='xpath'):
+        if mathod=='xpath':#xpath方法
             for i in self.response:
                 txt=etree.HTML(i.text)
                 self.data.append(txt.xpath(mode))
+        elif mathod=='re':#re方法
+            r=re.compile(mode)
+            for i in self.response:
+                self.data.append(r.findall(i.txt))
+        elif mathod=='jsonpath':#jsonpath方法
+            for i in self.response:
+                jsonobj = json.loads(i.txt)
+                self.data.append(jsonpath.jsonpath(jsonobj, mode))
+        elif mathod=='BeautifulSoup':#BeautifulSoup方法
+            for i in self.response:
+                soup = BeautifulSoup(i.text, 'lxml')
+                self.data.append( soup.find_all(mode))
