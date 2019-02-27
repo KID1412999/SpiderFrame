@@ -5,7 +5,51 @@ from lxml import etree
 import re
 from bs4 import BeautifulSoup
 import random
-
+class Request:
+    id=0
+    def __init__(self,name):
+        self.name=name
+        Request.id+=1
+        self.show_information()
+        self.head=head={"User-Agent":"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36"}
+        self.urls=[]
+        self.usedurl=[]
+        self.response=[]
+        self.data=[]
+    def show_information(self):
+        print("我是 %s 爬虫\n编号%s"%(self.name,self.id))
+    def requests(self,mathod,url,data=None,params=None,encode='utf-8'):
+        for i in url:
+            if i not in self.usedurl:
+                if mathod=='get':
+                    html=requests.get(i,headers=self.head,params=params)
+                    html.encoding=encode
+                    self.response.append(html)
+                else:
+                    html=requests.post(i,headers=self.head,data=data)
+                    html.encoding=encode
+                    self.response.append(html)
+                self.usedurl.append(i)
+    def multithreads_requests(self,mathod,urls,k,data=None,params=None,encode='utf-8'):#多线程发送请求
+        threads = []#存放线程的数组，相当于线程池
+        p=0
+        k=k#间隔
+        while p+k<=len(urls):
+            thread =threading.Thread(target=self.requests,args=(mathod,urls[p:p+k],data,params,encode))#指定线程i的执行函数为myThread
+            p+=k
+            threads.append(thread)#先讲这个线程放到线程threads
+        if p!=len(urls):
+            thread =threading.Thread(target=self.requests,args=(mathod,urls[p:len(urls)],data,params,encode))
+            threads.append(thread)
+        for t in threads:#让线程池中的所有数组开始
+            t.start()
+        for t in threads:#让线程池中的所有数组开始 
+            t.join()
+    def search(self,mode='/html',mathod='xpath'):
+        if mathod=='xpath':
+            for i in self.response:
+                txt=etree.HTML(i.text)
+                self.data.append(txt.xpath(mode))
 class Spider:
     id=0
     def get_ip_list(headers):
